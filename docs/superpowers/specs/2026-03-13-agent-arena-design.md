@@ -90,7 +90,7 @@ app/
     vote-winner/
       route.ts            # POST — vote for the other team's response
     admin/
-      start/route.ts      # POST — start/reset the game
+      start/route.ts      # POST — start/reset the game (requires ADMIN_SECRET env var)
 stack/
   server.ts               # stackServerApp instance
   client.ts               # stackClientApp instance
@@ -129,8 +129,8 @@ interface GameState {
   phase: 'prompting' | 'voting-prompt' | 'battling' | 'voting-winner' | 'results'
   phaseEndsAt: number // Unix timestamp ms
   teams: {
-    red: { id: string; members: Set<string>; score: number }
-    blue: { id: string; members: Set<string>; score: number }
+    red: { id: string; members: string[]; score: number }
+    blue: { id: string; members: string[]; score: number }
   }
   rounds: Round[]
 }
@@ -159,7 +159,7 @@ interface Submission {
   userId: string
   text: string
   votes: number
-  voters: Set<string>
+  voters: string[]
 }
 ```
 
@@ -172,6 +172,16 @@ PROMPTING (45s) → VOTE ON PROMPT (20s) → BATTLING (60s) → VOTE ON WINNER (
 ```
 
 Total round time: ~2.5 minutes.
+
+### Server-Side Timer Mechanism
+
+The game engine (`lib/game-engine.ts`) uses `setTimeout` to schedule phase transitions. When a phase ends, the engine:
+1. Advances to the next phase
+2. Updates `gameState.phase` and `gameState.phaseEndsAt`
+3. Performs any phase-transition logic (e.g., selecting winning prompts, starting agent streams)
+4. Broadcasts a `phase-change` SSE event to all clients
+
+The engine is started by calling `POST /api/admin/start` with the `ADMIN_SECRET` env var.
 
 ### Phase Descriptions
 
@@ -197,12 +207,14 @@ Total round time: ~2.5 minutes.
 
 1. QR code displayed at `/` points to the app URL
 2. Landing page shows `<MagicLinkSignIn />` + `<OAuthButton provider="google" />`
-3. On successful auth, server-side middleware/handler:
-   - Checks if user already has a team assignment via `user.serverMetadata.faction`
-   - If not assigned: count members per team, assign to team with fewer members
+3. On successful auth, redirect to `/play`
+4. Team assignment happens in `app/play/page.tsx` (server component), before render:
+   - `const user = await stackServerApp.getUser({ or: 'redirect' });`
+   - Check `user.serverMetadata?.faction` — if already assigned, render page
+   - If not assigned: count members per team from game state, assign to smaller team
    - Call `team.addUser(userId)` to add to Stack Auth team
-   - Set `user.serverMetadata.faction = 'red' | 'blue'`
-4. Redirect to `/play`
+   - `await user.update({ serverMetadata: { ...user.serverMetadata, faction } })`
+   - Also add user ID to in-memory `gameState.teams[faction].members`
 
 ### Pre-Seeded Teams
 
@@ -224,6 +236,18 @@ Store team IDs in game state.
 | `serverMetadata.hasVotedWinner` | `number \| null` | Round ID of last winner vote (prevents double-vote) |
 
 Vote flags are checked server-side on API routes. Reset implicitly by comparing against current round ID.
+
+**Important: Metadata update pattern.** `user.update({ serverMetadata })` performs a full replacement, not a merge. Every metadata update must read-then-spread:
+
+```typescript
+await user.update({
+  serverMetadata: { ...user.serverMetadata, hasVotedPrompt: currentRound },
+});
+```
+
+### Middleware
+
+Stack Auth middleware must be configured in `middleware.ts` at the project root (this is set up by the `npx @stackframe/init-stack` wizard). This enables `stackServerApp.getUser()` to work in both server components and route handlers.
 
 ### Auth on API Routes
 
@@ -247,7 +271,7 @@ Single SSE endpoint. All clients (arena + mobile) connect here.
 |-------|---------|------|
 | `phase-change` | `{ phase, phaseEndsAt, round, category }` | Phase transitions |
 | `prompt-submitted` | `{ faction, count }` | New prompt submitted (count only, no content leak) |
-| `prompt-votes-update` | `{ faction, prompts: [{text, votes}] }` | Vote tallies update (to own faction only) |
+| `prompt-votes-update` | `{ faction, prompts: [{text, votes}] }` | Vote tallies update (broadcast to all — prompts become public after voting anyway) |
 | `winning-prompts` | `{ red: string, blue: string }` | Top prompts selected |
 | `agent-token` | `{ faction, token: string }` | Each streamed token from agent |
 | `agent-done` | `{ faction }` | Agent finished responding |
@@ -292,7 +316,7 @@ Keep your response under 200 words for readability.
 
 ### Model
 
-Use `claude-sonnet-4-5-20250929` — fast enough for real-time streaming, high quality.
+Use env var `CLAUDE_MODEL` with default `claude-sonnet-4-5-20250929` — fast enough for real-time streaming, high quality. Configurable without code changes.
 
 ## Page Designs
 
@@ -314,7 +338,13 @@ Use `claude-sonnet-4-5-20250929` — fast enough for real-time streaming, high q
 - Round indicator: "Round 3/5"
 - Team score
 
-**Phase-aware main content (one visible at a time):**
+**Waiting state (before game starts):**
+- Faction badge displayed prominently with glow
+- "Waiting for the game to begin..."
+- Player counts per team: "Red: 12 players | Blue: 14 players"
+- Subtle pulse animation
+
+**Phase-aware main content (one visible at a time, only when game is `active`):**
 
 - **Prompting phase:**
   - Category name displayed large
@@ -388,11 +418,40 @@ Use `claude-sonnet-4-5-20250929` — fast enough for real-time streaming, high q
 7. **Storyteller** — "Continue this story in the most unexpected way: {opening}"
 8. **Conspiracy Theory** — "Invent the most convincing fake conspiracy about {topic}"
 
-Categories shuffle each game. Random topics/positions are pre-defined per category.
+Categories shuffle each game. Parameterized categories draw from pre-defined value lists in `lib/categories.ts`:
+
+- **Haiku topics:** "artificial intelligence", "Monday mornings", "pizza", "the internet", "cats"
+- **ELI5 topics:** "quantum computing", "blockchain", "black holes", "DNA", "inflation"
+- **Debate positions:** "tabs are better than spaces", "pineapple belongs on pizza", "AI will replace programmers", "remote work is superior"
+- **Code Golf problems:** "FizzBuzz", "reverse a string", "check for palindrome", "fibonacci sequence"
+- **Story openings:** "The last human on Earth heard a knock...", "The AI said 'I'm sorry, I can't do that' and meant it...", "The hackathon had been going for 72 hours when..."
+- **Conspiracy topics:** "rubber ducks", "the cloud", "semicolons", "dark mode"
+
+## API Request/Response Schemas
+
+### `POST /api/submit-prompt`
+
+Request: `{ text: string }` — max 280 characters. Max 3 submissions per user per round (enforced server-side via in-memory tracking).
+Response: `201` on success, `400` if invalid, `429` if rate limited.
+
+### `POST /api/vote-prompt`
+
+Request: `{ index: number }` — index of the prompt in your faction's submission list.
+Response: `200` on success, `409` if already voted this round.
+
+### `POST /api/vote-winner`
+
+Request: `{ votedFor: 'red' | 'blue' }` — must be the OTHER team. Server validates `votedFor !== user.faction`.
+Response: `200` on success, `403` if voting for own team, `409` if already voted.
+
+### `POST /api/admin/start`
+
+Request: `{ secret: string, rounds?: number }` — `secret` must match `ADMIN_SECRET` env var.
+Response: `200` on success, `403` if wrong secret.
 
 ## Error Handling
 
-- **SSE disconnect:** Client auto-reconnects with `EventSource` retry. Server cleans up stale connections.
+- **SSE disconnect:** Client auto-reconnects with `EventSource` retry. Server cleans up stale connections. On reconnect, server sends a `phase-change` event with current state as the first message so the client syncs up.
 - **Auth failure:** Redirect to `/` with error toast.
 - **Claude API failure:** Show "Agent malfunction!" message in the panel. Other agent still completes. Forfeit that panel's round.
 - **Double voting:** Server-side check via user metadata. Return 409 Conflict. Client shows "Already voted."
