@@ -11,7 +11,7 @@ export default async function LandingPage() {
 
       <div className="relative z-10 flex flex-col items-center gap-8 px-4">
         <h1
-          className="text-5xl md:text-7xl font-bold tracking-wider text-center"
+          className="text-5xl md:text-7xl font-bold tracking-wider text-center animate-glow-pulse"
           style={{
             fontFamily: "var(--font-display)",
             textShadow: "0 0 20px rgba(124,58,237,0.5), 0 0 40px rgba(124,58,237,0.3)",
@@ -19,18 +19,22 @@ export default async function LandingPage() {
         >
           AGENT ARENA
         </h1>
-        <p className="text-[var(--text-muted)] text-lg tracking-widest uppercase">
-          Scan. Join. Battle.
+        <p className="text-lg tracking-widest uppercase">
+          <span className="text-[var(--red-faction)]">RED</span>
+          <span className="text-[var(--text-muted)]"> vs </span>
+          <span className="text-[var(--blue-faction)]">BLUE</span>
         </p>
 
-        <div className="w-full max-w-sm bg-[var(--bg-card)] rounded-xl p-6 border border-white/10">
-          <a
-            href="/handler/sign-in"
-            className="block w-full text-center py-3 px-6 rounded-lg bg-white/10 hover:bg-white/20 transition-colors font-semibold cursor-pointer"
-          >
-            Sign In to Join
-          </a>
-        </div>
+        <a
+          href="/handler/sign-in"
+          className="py-4 px-12 rounded-lg font-bold text-lg tracking-wider uppercase cursor-pointer transition-all duration-200 border border-[var(--accent-gold)]/30 hover:border-[var(--accent-gold)] hover:shadow-[0_0_20px_rgba(255,215,0,0.3)]"
+          style={{
+            fontFamily: "var(--font-display)",
+            background: "linear-gradient(135deg, rgba(255,70,85,0.2), rgba(0,212,255,0.2))",
+          }}
+        >
+          Enter the Arena
+        </a>
       </div>
     </div>
   );

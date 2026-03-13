@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { Faction, Phase, GameStatus } from "@/lib/types";
 import { useSSE } from "@/lib/hooks/useSSE";
 import RoundHeader from "@/components/arena/RoundHeader";
@@ -116,9 +117,9 @@ export default function ArenaPage() {
 
       <div className="relative z-10 flex flex-col h-full">
         {state.status === "waiting" && (
-          <div className="flex-1 flex flex-col items-center justify-center gap-6">
+          <div className="flex-1 flex flex-col items-center justify-center gap-8">
             <h1
-              className="text-8xl font-bold tracking-wider"
+              className="text-8xl font-bold tracking-wider animate-glow-pulse"
               style={{
                 fontFamily: "var(--font-display)",
                 textShadow: "0 0 30px rgba(124,58,237,0.5), 0 0 60px rgba(124,58,237,0.3)",
@@ -127,9 +128,29 @@ export default function ArenaPage() {
               AGENT ARENA
             </h1>
             <p className="text-2xl text-[var(--text-muted)] tracking-widest uppercase">
-              Scan the QR code to join
+              Scan to join the battle
             </p>
-            <div className="w-4 h-4 rounded-full bg-[var(--accent-gold)] animate-pulse mt-8" />
+            <div className="bg-white p-4 rounded-2xl shadow-[0_0_40px_rgba(255,215,0,0.3)]">
+              <QRCodeSVG
+                value={typeof window !== "undefined" ? `${window.location.origin}/play` : "/play"}
+                size={200}
+                bgColor="#FFFFFF"
+                fgColor="#0D0D1A"
+                level="M"
+              />
+            </div>
+            <div className="flex items-center gap-3 text-[var(--text-muted)]">
+              <div className="flex gap-1">
+                <span className="text-[var(--red-faction)] font-bold">{state.memberCounts.red}</span>
+                <span>RED</span>
+              </div>
+              <span>|</span>
+              <div className="flex gap-1">
+                <span className="text-[var(--blue-faction)] font-bold">{state.memberCounts.blue}</span>
+                <span>BLUE</span>
+              </div>
+              <span className="ml-2">joined</span>
+            </div>
           </div>
         )}
 
