@@ -25,9 +25,10 @@ export default function VoteCards({ redText, blueText, userFaction, onVote, hasV
             <button
               onClick={() => canVoteFor(faction) && onVote(faction)}
               disabled={!canVoteFor(faction)}
-              className={`w-full text-left p-4 rounded-xl ${
+              aria-label={`Vote for ${faction} faction`}
+              className={`w-full text-left p-4 rounded-xl outline-none ${
                 canVoteFor(faction)
-                  ? "cursor-pointer hover:bg-white/5 transition-colors"
+                  ? "cursor-pointer hover:bg-white/5 transition-colors focus:ring-2 focus:ring-[var(--accent-gold)]"
                   : "opacity-50 cursor-not-allowed"
               }`}
             >

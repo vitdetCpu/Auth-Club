@@ -23,13 +23,15 @@ export function removeClient(id: string) {
 export function broadcast(event: string, data: object) {
   const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   const encoded = new TextEncoder().encode(message);
+  const stale: SSEClient[] = [];
   for (const client of clients) {
     try {
       client.controller.enqueue(encoded);
     } catch {
-      clients.delete(client);
+      stale.push(client);
     }
   }
+  stale.forEach(c => clients.delete(c));
 }
 
 export function sendToClient(clientId: string, event: string, data: object) {

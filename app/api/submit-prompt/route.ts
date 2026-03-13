@@ -15,7 +15,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Not in prompting phase" }, { status: 400 });
   }
 
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
   const text = body.text?.trim();
   if (!text || text.length > 280) {
     return NextResponse.json({ error: "Invalid prompt (1-280 chars)" }, { status: 400 });

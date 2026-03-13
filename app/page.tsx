@@ -27,7 +27,7 @@ export default async function LandingPage() {
 
         <a
           href="/handler/sign-in"
-          className="py-4 px-12 rounded-lg font-bold text-lg tracking-wider uppercase cursor-pointer transition-all duration-200 border border-[var(--accent-gold)]/30 hover:border-[var(--accent-gold)] hover:shadow-[0_0_20px_rgba(255,215,0,0.3)]"
+          className="py-4 px-12 rounded-lg font-bold text-lg tracking-wider uppercase cursor-pointer transition-all duration-200 border border-[var(--accent-gold)]/30 hover:border-[var(--accent-gold)] hover:shadow-[0_0_20px_rgba(255,215,0,0.3)] focus:ring-2 focus:ring-[var(--accent-gold)] outline-none"
           style={{
             fontFamily: "var(--font-display)",
             background: "linear-gradient(135deg, rgba(255,70,85,0.2), rgba(0,212,255,0.2))",

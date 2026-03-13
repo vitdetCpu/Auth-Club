@@ -26,3 +26,11 @@ body {
 .animate-glow-pulse {
   animation: glow-pulse 2s ease-in-out infinite;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse,
+  .animate-pulse,
+  .animate-bounce {
+    animation: none;
+  }
+}

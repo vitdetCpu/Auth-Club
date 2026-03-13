@@ -38,7 +38,8 @@ export default function PromptList({ prompts, onVote, votingEnabled, hasVoted }:
             <button
               onClick={() => onVote?.(prompt.originalIndex)}
               disabled={hasVoted}
-              className="flex flex-col items-center min-w-[40px] cursor-pointer disabled:opacity-30"
+              aria-label={`Upvote prompt: ${prompt.text.slice(0, 30)}`}
+              className="flex flex-col items-center min-w-[40px] cursor-pointer disabled:opacity-30 focus:ring-2 focus:ring-[var(--accent-gold)] rounded outline-none"
             >
               <ChevronUp className="w-5 h-5" />
               <span className="text-sm font-bold tabular-nums">{prompt.votes}</span>

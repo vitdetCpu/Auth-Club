@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Faction, Phase, GameStatus } from "@/lib/types";
 import { useSSE } from "@/lib/hooks/useSSE";
@@ -32,6 +32,11 @@ interface ArenaState {
 }
 
 export default function ArenaPage() {
+  const [playUrl, setPlayUrl] = useState("/play");
+  useEffect(() => {
+    setPlayUrl(`${window.location.origin}/play`);
+  }, []);
+
   const [state, setState] = useState<ArenaState>({
     status: "waiting",
     phase: "prompting",
@@ -132,7 +137,7 @@ export default function ArenaPage() {
             </p>
             <div className="bg-white p-4 rounded-2xl shadow-[0_0_40px_rgba(255,215,0,0.3)]">
               <QRCodeSVG
-                value={typeof window !== "undefined" ? `${window.location.origin}/play` : "/play"}
+                value={playUrl}
                 size={200}
                 bgColor="#FFFFFF"
                 fgColor="#0D0D1A"

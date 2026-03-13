@@ -40,13 +40,15 @@ export default function PromptInput({ category, onSubmit, disabled }: PromptInpu
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           maxLength={280}
           placeholder="Enter your prompt..."
+          aria-label="Enter your prompt"
           disabled={disabled || submitting}
-          className="flex-1 bg-[var(--bg-card)] border border-white/10 rounded-lg px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-white/30 transition-colors"
+          className="flex-1 bg-[var(--bg-card)] border border-white/10 rounded-lg px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] outline-none transition-colors"
         />
         <button
           onClick={handleSubmit}
           disabled={!text.trim() || submitting || disabled}
-          className="bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded-lg px-4 py-3 transition-colors cursor-pointer"
+          aria-label="Submit prompt"
+          className="bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded-lg px-4 py-3 transition-colors cursor-pointer focus:ring-2 focus:ring-[var(--accent-gold)] outline-none"
         >
           <Send className="w-5 h-5" />
         </button>

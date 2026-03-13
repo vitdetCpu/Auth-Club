@@ -19,7 +19,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Already voted" }, { status: 409 });
   }
 
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
   const { index } = body;
 
   const voted = voteForPrompt(faction, index, user.id);
