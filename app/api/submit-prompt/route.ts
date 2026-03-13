@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from "next/server";
+import { stackServerApp } from "@/stack/server";
+import { gameState, addSubmission, getCurrentRound } from "@/lib/game-state";
+import { broadcast } from "@/lib/sse";
+import { Faction } from "@/lib/types";
+
+export async function POST(request: NextRequest) {
+  const user = await stackServerApp.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const faction = user.serverMetadata?.faction as Faction | undefined;
+  if (!faction) return NextResponse.json({ error: "No faction assigned" }, { status: 400 });
+
+  if (gameState.phase !== "prompting") {
+    return NextResponse.json({ error: "Not in prompting phase" }, { status: 400 });
+  }
+
+  const body = await request.json();
+  const text = body.text?.trim();
+  if (!text || text.length > 280) {
+    return NextResponse.json({ error: "Invalid prompt (1-280 chars)" }, { status: 400 });
+  }
+
+  const added = addSubmission(faction, {
+    userId: user.id,
+    text,
+    votes: 0,
+    voters: [],
+  });
+
+  if (!added) {
+    return NextResponse.json({ error: "Max 3 submissions per round" }, { status: 429 });
+  }
+
+  const round = getCurrentRound()!;
+  broadcast("prompt-submitted", {
+    faction,
+    count: round.submissions[faction].length,
+  });
+
+  broadcast("prompt-votes-update", {
+    faction,
+    prompts: round.submissions[faction].map(s => ({ text: s.text, votes: s.votes })),
+  });
+
+  return NextResponse.json({ ok: true }, { status: 201 });
+}
