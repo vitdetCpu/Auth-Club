@@ -56,6 +56,7 @@ function startNextRound() {
       blue: { text: "", streaming: false },
     },
     votes: { red: 0, blue: 0 },
+    winnerVoters: [],
     winner: null,
   };
 

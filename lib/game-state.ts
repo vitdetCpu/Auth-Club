@@ -21,8 +21,7 @@ export function resetGame(totalRounds: number = 5) {
   gameState.totalRounds = totalRounds;
   gameState.teams.red.score = 0;
   gameState.teams.blue.score = 0;
-  gameState.teams.red.members = [];
-  gameState.teams.blue.members = [];
+  // Keep members — players who joined before game start should persist
   gameState.rounds = [];
 }
 
@@ -74,6 +73,8 @@ export function getWinningPrompt(faction: Faction): string | null {
 export function voteForWinner(votedFor: Faction, userId: string): boolean {
   const round = getCurrentRound();
   if (!round) return false;
+  if (round.winnerVoters.includes(userId)) return false;
+  round.winnerVoters.push(userId);
   round.votes[votedFor]++;
   return true;
 }

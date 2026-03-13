@@ -33,6 +33,7 @@ export interface Round {
     blue: { text: string; streaming: boolean };
   };
   votes: { red: number; blue: number };
+  winnerVoters: string[];
   winner: Faction | null;
 }
 
