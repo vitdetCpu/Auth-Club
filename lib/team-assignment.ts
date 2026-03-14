@@ -1,6 +1,6 @@
 import { stackServerApp } from "@/stack/server";
 import { gameState, addMember, getSmallerFaction } from "./game-state";
-import { Faction } from "./types";
+import { BattleFaction } from "./types";
 
 let teamsInitialized = false;
 
@@ -23,7 +23,7 @@ export async function ensureTeams() {
   teamsInitialized = true;
 }
 
-export async function assignUserToFaction(userId: string): Promise<Faction> {
+export async function assignUserToFaction(userId: string): Promise<BattleFaction> {
   await ensureTeams();
 
   const faction = getSmallerFaction();

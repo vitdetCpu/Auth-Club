@@ -1,14 +1,18 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { Round, Faction } from "./types";
+import { Round, BattleFaction } from "./types";
 import { broadcast } from "./sse";
 
-const anthropic = new Anthropic();
+const apiKey = process.env.ANTHROPIC_API_KEY;
+console.log(`[ai-battle] API key loaded: ${apiKey ? `yes (length ${apiKey.length})` : "MISSING"}`);
+console.log(`[ai-battle] Model: ${process.env.CLAUDE_MODEL ?? "claude-sonnet-4-5-20250929"}`);
+
+const anthropic = new Anthropic({ apiKey });
 
 const MODEL = process.env.CLAUDE_MODEL ?? "claude-sonnet-4-5-20250929";
 
 let currentBattleAbort: AbortController | null = null;
 
-function buildSystemPrompt(faction: Faction, category: string, prompt: string): string {
+function buildSystemPrompt(faction: BattleFaction, category: string, prompt: string): string {
   return `You are the AI champion for the ${faction.toUpperCase()} Faction in Agent Arena, a live competition.
 Category: ${category}
 Your faction's audience has chosen this challenge for you: "${prompt}"
@@ -17,7 +21,7 @@ Give your best response. Be creative, entertaining, and concise.
 Keep your response under 200 words for readability.`;
 }
 
-async function streamAgent(faction: Faction, round: Round, signal: AbortSignal) {
+async function streamAgent(faction: BattleFaction, round: Round, signal: AbortSignal) {
   const prompt = round.winningPrompts[faction] ?? round.prompt;
 
   round.responses[faction].streaming = true;
@@ -44,7 +48,7 @@ async function streamAgent(faction: Faction, round: Round, signal: AbortSignal) 
     if (signal.aborted) {
       console.log(`Agent ${faction} stream aborted (phase advanced)`);
     } else {
-      console.error(`Agent ${faction} error:`, error);
+      console.error(`Agent ${faction} error:`, error instanceof Error ? error.message : error);
       if (!round.responses[faction].text) {
         round.responses[faction].text = "[Agent malfunction! The AI champion has fallen...]";
         broadcast("agent-token", {

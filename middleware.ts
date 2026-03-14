@@ -10,7 +10,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/handler") ||
     pathname.startsWith("/arena") ||
     pathname === "/api/stream" ||
-    pathname === "/api/admin/start"
+    pathname === "/api/admin/start" ||
+    pathname === "/api/member-count"
   ) {
     return NextResponse.next();
   }

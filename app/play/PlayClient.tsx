@@ -128,6 +128,9 @@ export default function PlayClient({ faction, userId, displayName }: PlayClientP
             finalScores: data.finalScores,
           };
 
+        case "member-joined":
+          return { ...prev, memberCounts: data.members };
+
         default:
           return prev;
       }
@@ -149,13 +152,22 @@ export default function PlayClient({ faction, userId, displayName }: PlayClientP
   };
 
   const votePrompt = async (index: number) => {
+    // Optimistically update the vote count
+    setView((prev) => ({
+      ...prev,
+      hasVotedPrompt: true,
+      myPrompts: prev.myPrompts.map((p, i) =>
+        i === index ? { ...p, votes: p.votes + 1 } : p
+      ),
+    }));
     const res = await fetch("/api/vote-prompt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ index }),
     });
-    if (res.ok) {
-      setView((prev) => ({ ...prev, hasVotedPrompt: true }));
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Vote failed" }));
+      console.error("Vote error:", err.error);
     }
   };
 
@@ -218,22 +230,36 @@ export default function PlayClient({ faction, userId, displayName }: PlayClientP
         {view.status === "active" && (
           <>
             {view.phase === "prompting" && (
-              <div className="space-y-4">
-                <PromptInput category={view.category} onSubmit={submitPrompt} />
-                <PromptList prompts={view.myPrompts} />
-              </div>
+              faction === "judge" ? (
+                <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+                  <div className="w-4 h-4 rounded-full bg-[var(--accent-gold)] animate-pulse" />
+                  <p className="text-[var(--text-muted)]">Players are submitting prompts...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <PromptInput category={view.category} onSubmit={submitPrompt} />
+                  <PromptList prompts={view.myPrompts} />
+                </div>
+              )
             )}
 
             {view.phase === "voting-prompt" && (
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold text-center">Pick the best prompt for your agent!</h2>
-                <PromptList
-                  prompts={view.myPrompts}
-                  votingEnabled
-                  onVote={votePrompt}
-                  hasVoted={view.hasVotedPrompt}
-                />
-              </div>
+              faction === "judge" ? (
+                <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+                  <div className="w-4 h-4 rounded-full bg-[var(--accent-gold)] animate-pulse" />
+                  <p className="text-[var(--text-muted)]">Players are voting on prompts...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold text-center">Pick the best prompt for your agent!</h2>
+                  <PromptList
+                    prompts={view.myPrompts}
+                    votingEnabled
+                    onVote={votePrompt}
+                    hasVoted={view.hasVotedPrompt}
+                  />
+                </div>
+              )
             )}
 
             {view.phase === "battling" && (
@@ -263,13 +289,34 @@ export default function PlayClient({ faction, userId, displayName }: PlayClientP
             )}
 
             {view.phase === "voting-winner" && (
-              <VoteCards
-                redText={view.redResponse}
-                blueText={view.blueResponse}
-                userFaction={faction}
-                onVote={voteWinner}
-                hasVoted={view.hasVotedWinner}
-              />
+              faction === "judge" ? (
+                <VoteCards
+                  redText={view.redResponse}
+                  blueText={view.blueResponse}
+                  userFaction={faction}
+                  onVote={voteWinner}
+                  hasVoted={view.hasVotedWinner}
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6">
+                  <div className="flex gap-2">
+                    {[0, 1, 2].map((i) => (
+                      <div
+                        key={i}
+                        className="w-4 h-4 rounded-full bg-[var(--accent-gold)] animate-bounce"
+                        style={{ animationDelay: `${i * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                  <p
+                    className="text-2xl font-bold text-[var(--accent-gold)] tracking-wider"
+                    style={{ fontFamily: "var(--font-display)" }}
+                  >
+                    VOTING IN PROGRESS...
+                  </p>
+                  <p className="text-[var(--text-muted)]">Judges are deciding the winner</p>
+                </div>
+              )
             )}
 
             {view.phase === "results" && (

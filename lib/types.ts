@@ -1,4 +1,5 @@
-export type Faction = "red" | "blue";
+export type BattleFaction = "red" | "blue";
+export type Faction = BattleFaction | "judge";
 
 export type Phase =
   | "prompting"
@@ -53,6 +54,7 @@ export interface GameState {
     red: TeamState;
     blue: TeamState;
   };
+  judges: string[];
   rounds: Round[];
 }
 
@@ -65,4 +67,5 @@ export type SSEEvent =
   | { type: "agent-done"; data: { faction: Faction } }
   | { type: "winner-votes-update"; data: { red: number; blue: number } }
   | { type: "round-result"; data: { winner: Faction; scores: { red: number; blue: number } } }
-  | { type: "game-over"; data: { winner: Faction; finalScores: { red: number; blue: number } } };
+  | { type: "game-over"; data: { winner: Faction; finalScores: { red: number; blue: number } } }
+  | { type: "member-joined"; data: { members: { red: number; blue: number; judges: number } } };

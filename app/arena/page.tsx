@@ -26,16 +26,20 @@ interface ArenaState {
   winnerVotes: { red: number; blue: number };
   roundWinner: Faction | null;
   scores: { red: number; blue: number };
-  memberCounts: { red: number; blue: number };
+  memberCounts: { red: number; blue: number; judges: number };
   gameWinner: Faction | null;
   finalScores: { red: number; blue: number } | null;
 }
 
 export default function ArenaPage() {
-  const [playUrl, setPlayUrl] = useState("/play");
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL
+    || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "");
+  const [playUrl, setPlayUrl] = useState(envUrl ? `${envUrl}/play` : "/play");
   useEffect(() => {
-    setPlayUrl(`${window.location.origin}/play`);
-  }, []);
+    if (!envUrl) {
+      setPlayUrl(`${window.location.origin}/play`);
+    }
+  }, [envUrl]);
 
   const [state, setState] = useState<ArenaState>({
     status: "waiting",
@@ -52,7 +56,7 @@ export default function ArenaPage() {
     winnerVotes: { red: 0, blue: 0 },
     roundWinner: null,
     scores: { red: 0, blue: 0 },
-    memberCounts: { red: 0, blue: 0 },
+    memberCounts: { red: 0, blue: 0, judges: 0 },
     gameWinner: null,
     finalScores: null,
   });
@@ -108,6 +112,9 @@ export default function ArenaPage() {
         case "game-over":
           return { ...prev, status: "finished", gameWinner: data.winner, finalScores: data.finalScores };
 
+        case "member-joined":
+          return { ...prev, memberCounts: data.members };
+
         default:
           return prev;
       }
@@ -143,18 +150,6 @@ export default function ArenaPage() {
                 fgColor="#0D0D1A"
                 level="M"
               />
-            </div>
-            <div className="flex items-center gap-3 text-[var(--text-muted)]">
-              <div className="flex gap-1">
-                <span className="text-[var(--red-faction)] font-bold">{state.memberCounts.red}</span>
-                <span>RED</span>
-              </div>
-              <span>|</span>
-              <div className="flex gap-1">
-                <span className="text-[var(--blue-faction)] font-bold">{state.memberCounts.blue}</span>
-                <span>BLUE</span>
-              </div>
-              <span className="ml-2">joined</span>
             </div>
           </div>
         )}
@@ -234,6 +229,7 @@ export default function ArenaPage() {
               scores={state.scores}
               redMembers={state.memberCounts.red}
               blueMembers={state.memberCounts.blue}
+              judgeCount={state.memberCounts.judges ?? 0}
               phase={state.phase}
             />
           </>

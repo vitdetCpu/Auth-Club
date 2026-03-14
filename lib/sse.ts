@@ -6,7 +6,7 @@ interface SSEClient {
 const clients = new Set<SSEClient>();
 
 export function addClient(controller: ReadableStreamDefaultController): string {
-  const id = crypto.randomUUID();
+  const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
   clients.add({ controller, id });
   return id;
 }

@@ -6,7 +6,7 @@ interface FactionBadgeProps {
 }
 
 export default function FactionBadge({ faction, className = "" }: FactionBadgeProps) {
-  const color = faction === "red" ? "var(--red-faction)" : "var(--blue-faction)";
+  const color = faction === "red" ? "var(--red-faction)" : faction === "blue" ? "var(--blue-faction)" : "var(--accent-gold)";
 
   return (
     <span
@@ -17,7 +17,7 @@ export default function FactionBadge({ faction, className = "" }: FactionBadgePr
         boxShadow: `0 0 15px color-mix(in srgb, ${color} 30%, transparent)`,
       }}
     >
-      {faction} faction
+      {faction === "judge" ? "JUDGE" : `${faction} faction`}
     </span>
   );
 }

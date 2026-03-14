@@ -8,9 +8,9 @@ let phaseTimer: ReturnType<typeof setTimeout> | null = null;
 let shuffledCategories: Category[] = [];
 
 const PHASE_DURATIONS: Record<Phase, number> = {
-  prompting: 45_000,
+  prompting: 20_000,
   "voting-prompt": 20_000,
-  battling: 60_000,
+  battling: 30_000,
   "voting-winner": 20_000,
   results: 10_000,
 };
@@ -83,7 +83,7 @@ function setPhase(phase: Phase) {
     status: gameState.status,
     totalRounds: gameState.totalRounds,
     scores: { red: gameState.teams.red.score, blue: gameState.teams.blue.score },
-    members: { red: gameState.teams.red.members.length, blue: gameState.teams.blue.members.length },
+    members: { red: gameState.teams.red.members.length, blue: gameState.teams.blue.members.length, judges: gameState.judges.length },
   });
 
   if (phase === "battling") {

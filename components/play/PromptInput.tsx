@@ -42,15 +42,16 @@ export default function PromptInput({ category, onSubmit, disabled }: PromptInpu
           placeholder="Enter your prompt..."
           aria-label="Enter your prompt"
           disabled={disabled || submitting}
-          className="flex-1 bg-[var(--bg-card)] border border-white/10 rounded-lg px-4 py-3 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] outline-none transition-colors"
+          className="flex-1 bg-[var(--bg-card)] border border-white/10 rounded-xl px-4 py-4 text-base text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[var(--accent-gold)] focus:ring-1 focus:ring-[var(--accent-gold)] outline-none transition-colors"
         />
         <button
           onClick={handleSubmit}
           disabled={!text.trim() || submitting || disabled}
           aria-label="Submit prompt"
-          className="bg-white/10 hover:bg-white/20 disabled:opacity-30 rounded-lg px-4 py-3 transition-colors cursor-pointer focus:ring-2 focus:ring-[var(--accent-gold)] outline-none"
+          className="bg-[var(--accent-gold)] hover:bg-[var(--accent-gold)]/80 text-black font-bold disabled:opacity-30 rounded-xl px-6 py-4 transition-colors cursor-pointer focus:ring-2 focus:ring-white outline-none flex items-center gap-2 text-base"
         >
           <Send className="w-5 h-5" />
+          <span>SEND</span>
         </button>
       </div>
       <p className="text-xs text-[var(--text-muted)] text-right">{text.length}/280</p>

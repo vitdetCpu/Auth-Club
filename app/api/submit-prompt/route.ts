@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stackServerApp } from "@/stack/server";
 import { gameState, addSubmission, getCurrentRound } from "@/lib/game-state";
 import { broadcast } from "@/lib/sse";
-import { Faction } from "@/lib/types";
+import { Faction, BattleFaction } from "@/lib/types";
 
 export async function POST(request: NextRequest) {
   const user = await stackServerApp.getUser();
@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
 
   const faction = user.serverMetadata?.faction as Faction | undefined;
   if (!faction) return NextResponse.json({ error: "No faction assigned" }, { status: 400 });
+  if (faction === "judge") return NextResponse.json({ error: "Judges cannot submit prompts" }, { status: 403 });
 
   if (gameState.phase !== "prompting") {
     return NextResponse.json({ error: "Not in prompting phase" }, { status: 400 });
@@ -26,7 +27,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid prompt (1-280 chars)" }, { status: 400 });
   }
 
-  const added = addSubmission(faction, {
+  const battleFaction = faction as BattleFaction;
+  const added = addSubmission(battleFaction, {
     userId: user.id,
     text,
     votes: 0,
@@ -40,12 +42,12 @@ export async function POST(request: NextRequest) {
   const round = getCurrentRound()!;
   broadcast("prompt-submitted", {
     faction,
-    count: round.submissions[faction].length,
+    count: round.submissions[battleFaction].length,
   });
 
   broadcast("prompt-votes-update", {
     faction,
-    prompts: round.submissions[faction].map(s => ({ text: s.text, votes: s.votes })),
+    prompts: round.submissions[battleFaction].map(s => ({ text: s.text, votes: s.votes })),
   });
 
   return NextResponse.json({ ok: true }, { status: 201 });
