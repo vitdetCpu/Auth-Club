@@ -2,7 +2,7 @@
 
 First rule of Auth Club: You do not talk about Auth Club.
 
-Auth Club is live, audience-powered AI competition platform where participants directly influence how AI agents battle in real time. Built for the Stack Auth hackathon.
+Auth Club is a live, audience-powered AI competition platform where participants directly influence how AI agents battle in real time. Built for the Stack Auth hackathon.
 
 ## How It Works
 
